@@ -1,0 +1,16 @@
+{
+  "name": "promptitude1",
+  "version": "1.0.0",
+  "description": "backend task 1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lakshmi Sowmya",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.0",
+    "mongoose": "^8.6.2"
+  }
+}
