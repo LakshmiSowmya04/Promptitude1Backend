@@ -10,13 +10,36 @@ router.post("/users", async (req, res) => {
   try {
     const { name, role, phone_number, email_id, alternate_pho_no, password } =
       req.body;
+
+    // Validate required fields
     if (!name || !role || !phone_number || !email_id) {
       return res.status(400).json({
         message: "All required fields must be filled",
         success: false,
       });
     }
+
+    // Phone number validation (assuming it should be 10 digits)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone_number)) {
+      return res.status(400).json({
+        message: "Invalid phone number. It should be 10 digits.",
+        success: false,
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email_id)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+        success: false,
+      });
+    }
+
     console.log("Received data:", req.body);
+
+    // Hash the password and create a new user object
     const newUser = new User({
       name,
       role,
@@ -26,7 +49,10 @@ router.post("/users", async (req, res) => {
       password: await bcrypt.hash(password, 10),
     });
 
+    // Save the new user to the database
     await newUser.save();
+
+    // Send a success response
     res.status(201).json({
       message: "User created successfully",
       success: true,
@@ -37,6 +63,7 @@ router.post("/users", async (req, res) => {
     res.status(500).json({ message: error.message, success: false });
   }
 });
+
 const isAdmin = (req, res, next) => {
   const { role } = req.query;
   if (role !== "Admin") {
@@ -45,18 +72,58 @@ const isAdmin = (req, res, next) => {
   next();
 };
 router.get("/users", async (req, res) => {
-  console.log("packet came isnide users");
+  console.log("Request received for /users");
+
+  // Extract user_id and role from the query parameters
   const { user_id, role } = req.query;
+
+  // Debug logging to ensure we receive correct query parameters
+  console.log("Received role:", role);
+  console.log("Received user_id:", user_id);
 
   try {
     let users;
+
+    // Ensure role is provided
+    if (!role) {
+      return res.status(400).json({
+        message: "Role is required",
+        success: false,
+      });
+    }
+
+    // If role is "Admin", retrieve all users
     if (role === "Admin") {
       users = await User.find();
-    } else {
-      users = await User.find({ reporting_to: user_id });
     }
+    // If user is not an Admin
+    else if (user_id) {
+      // Find the user by their own ID
+      const ownData = await User.findById(user_id);
+
+      if (!ownData) {
+        return res.status(404).json({
+          message: "User not found",
+          success: false,
+        });
+      }
+
+      // Find users who report to the current user
+      const reportingUsers = await User.find({ reporting_to: user_id });
+
+      // Combine the user's own data with the reporting users
+      users = [ownData, ...reportingUsers];
+    } else {
+      return res.status(400).json({
+        message: "User ID is required for non-admin users",
+        success: false,
+      });
+    }
+
+    // Respond with the list of users
     res.status(200).json({ success: true, data: users });
   } catch (error) {
+    console.error("Error in GET /users:", error); // Log the actual error
     res.status(500).json({ message: error.message, success: false });
   }
 });

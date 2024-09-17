@@ -13,10 +13,13 @@ app.use("/", userRoutes);
 
 // Connect to MongoDB
 mongoose
-  .connect("mongodb://localhost:27017/promptitude1", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    "mongodb+srv://deloaiprivatelimited:deloai@clusterpromptitude.bplkt.mongodb.net/",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("MongoDB connected"))
   .catch((err) => {
     console.error("MongoDB connection error: ", err); // Log the actual error
